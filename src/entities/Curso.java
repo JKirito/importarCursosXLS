@@ -71,14 +71,6 @@ public class Curso {
 		this.materia = materia;
 	}
 	
-	public List<DiaHorarioAula> getHorarioAula() {
-		return horarioAula;
-	}
-
-	public void setHorarioAula(List<DiaHorarioAula> horarioAula) {
-		this.horarioAula = horarioAula;
-	}
-
 	public String getSemestre() {
 		return semestre;
 	}

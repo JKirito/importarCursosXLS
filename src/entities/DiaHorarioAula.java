@@ -25,6 +25,13 @@ public class DiaHorarioAula {
 	public void setAula(Aula aula) {
 		this.aula = aula;
 	}
+	
+	
+
+	@Override
+	public String toString() {
+		return this.diaHorario.toString() + ";" + aula.getNumero();
+	}
 
 	@Override
 	public int hashCode() {

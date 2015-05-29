@@ -41,6 +41,7 @@ public class ImportarCursos {
 	private static final String PHP_ALTA_DIAHORARIO = "altaDiaHorario.php";
 	private static final String PHP_ALTA_CURSO = "altaCurso.php";
 	private static final String PHP_ALTA_CURSO_DOCENTE = "altaCurso_Docente.php";
+	private static final String PHP_ALTA_CURSO_HORARIO_AULA = "altaCurso_Horario_Aula.php";
 	
 	// UNIQUE
 	// alter table cursos add constraint uc_cur unique(comision, id_materias, semestre, año);
@@ -177,16 +178,20 @@ public class ImportarCursos {
 		//altaCursos(new HashSet<Curso>(this.cursos.values()));
 		
 		//Alta cursos_docentes
-		altaCursos_Docentes(new HashSet<Curso>(this.cursos.values()));
+		//altaCursos_Docentes(new HashSet<Curso>(this.cursos.values()));
+		
+		//Alta cursos_horarios_aulas
+		altaCurso_Horario_Aula(new HashSet<Curso>(this.cursos.values()));
 	}
 	
 	private void altaAulas(Set<Aula> aulas)
 	{
 		StringBuilder data = new StringBuilder();
+		final String SEPARADOR = ",";
 		System.out.println("TOTAL AULAS: " + aulas.size());
 		for(Aula aula : aulas)
 		{
-			data.append(aula.getNumero()+",");
+			data.append(aula.getNumero()+SEPARADOR);
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("aula", data.toString());
@@ -196,10 +201,11 @@ public class ImportarCursos {
 	private void altaMaterias(Set<Materia> materias)
 	{
 		StringBuilder data = new StringBuilder();
+		final String SEPARADOR = ";";
 		System.out.println("TOTAL MATERIAS: " + materias.size());
 		for (Materia materia : materias)
 		{
-			data.append(materia.getNombre()+";");
+			data.append(materia.getNombre()+SEPARADOR);
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("nombre", data.toString());
@@ -209,10 +215,11 @@ public class ImportarCursos {
 	private void altaDocentes(Set<Profesor> profesores)
 	{
 		StringBuilder data = new StringBuilder();
+		final String SEPARADOR = ";";
 		System.out.println("TOTAL DOCENTES: " + profesores.size());
 		for (Profesor profe : profesores)
 		{
-			data.append(profe.getNombre()+";");
+			data.append(profe.getNombre()+SEPARADOR);
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("nombre", data.toString());
@@ -222,10 +229,11 @@ public class ImportarCursos {
 	private void altaDiasHorarios(Set<DiaHorario> horarios)
 	{
 		StringBuilder data = new StringBuilder();
+		final String SEPARADOR = ",";
 		System.out.println("TOTAL DIAHORARIOS: " + horarios.size());
 		for (DiaHorario diaHorario : horarios)
 		{
-			data.append(diaHorario.toString()+",");
+			data.append(diaHorario.toString()+SEPARADOR);
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("diaHora", data.toString());
@@ -237,6 +245,7 @@ public class ImportarCursos {
 		StringBuilder data = new StringBuilder();
 		System.out.println("TOTAL CURSOS: " + cursos.size());
 		int i = 0;
+		final String SEPARADOR = "//";
 		for (Curso curso : cursos)
 		{
 			i++;
@@ -245,7 +254,7 @@ public class ImportarCursos {
 			String semestre = curso.getSemestre();
 			Integer año = curso.getAño();
 			data.append(com + ";" + nombreMat + ";" + semestre + ";" + año
-					+ "//");
+					+ SEPARADOR);
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("curso", data.toString());
@@ -256,6 +265,7 @@ public class ImportarCursos {
 	{
 		StringBuilder data = new StringBuilder();
 		int i = 0;
+		final String SEPARADOR = "//";
 		for (Curso curso : cursos)
 		{
 			for(Profesor prof : curso.getProfesores())
@@ -267,13 +277,48 @@ public class ImportarCursos {
 			Integer año = curso.getAño();
 			String nombreProf = prof.getNombre();
 			data.append(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + nombreProf
-					+ "//");
+					+ SEPARADOR);
 			}
 		}
 		System.out.println("TOTAL CURSOS_DOCENTES: " + i);
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("curso_docente", data.toString());
 		Conexion.enviarPost(datos, PHP_ALTA_CURSO_DOCENTE);
+	}
+	
+	private void altaCurso_Horario_Aula(Set<Curso> cursos)
+	{
+		StringBuilder data = new StringBuilder();
+		int i = 0;
+		final String SEPARADOR = "//";
+		Set<String> a = new HashSet<String>();
+		for (Curso curso : cursos)
+		{
+			for(DiaHorarioAula HA : curso.getHorariosAula())
+			{
+			i++;
+			String com = curso.getComision();
+			String nombreMat = curso.getMateria().getNombre();
+			String semestre = curso.getSemestre();
+			Integer año = curso.getAño();
+			String horarioAula = HA.toString();
+			data.append(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + horarioAula
+					+ SEPARADOR);
+			if(a.contains(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + horarioAula
+					+ SEPARADOR)){
+				System.out.println(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + horarioAula
+					+ SEPARADOR);
+			}else{
+				a.add(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + horarioAula
+						+ SEPARADOR);				
+			}
+			}
+		}
+		System.out.println("TOTAL CURSOS_HORARIOS_AULAS: " + i);
+		System.out.println(a.size() == i ? "OK" : a.size() +": s diferente, hay algo mal :(");
+		Map<String, String> datos = new HashMap<String, String>();
+		datos.put("curso_horario_aula", data.toString());
+//		Conexion.enviarPost(datos, PHP_ALTA_CURSO_HORARIO_AULA);
 	}
 
 }
