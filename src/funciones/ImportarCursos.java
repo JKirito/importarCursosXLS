@@ -40,6 +40,7 @@ public class ImportarCursos {
 	private static final String PHP_ALTA_DOCENTE = "altaDocente.php";
 	private static final String PHP_ALTA_DIAHORARIO = "altaDiaHorario.php";
 	private static final String PHP_ALTA_CURSO = "altaCurso.php";
+	private static final String PHP_ALTA_CURSO_DOCENTE = "altaCurso_Docente.php";
 	
 	// UNIQUE
 	// alter table cursos add constraint uc_cur unique(comision, id_materias, semestre, año);
@@ -118,6 +119,7 @@ public class ImportarCursos {
 				for(String p : nombresProfesores)
 				{
 					profesor = new Profesor(p.trim());
+					profesores.add(profesor);
 					this.docentes.add(profesor);
 				}
 				
@@ -172,8 +174,10 @@ public class ImportarCursos {
 		//altaDocentes(this.docentes);
 		
 		//Alta cursos
-		altaCursos(new HashSet<Curso>(this.cursos.values()));
+		//altaCursos(new HashSet<Curso>(this.cursos.values()));
 		
+		//Alta cursos_docentes
+		altaCursos_Docentes(new HashSet<Curso>(this.cursos.values()));
 	}
 	
 	private void altaAulas(Set<Aula> aulas)
@@ -228,7 +232,6 @@ public class ImportarCursos {
 		Conexion.enviarPost(datos, PHP_ALTA_DIAHORARIO);
 	}
 	
-	//TODO! ver! 547 aca y 533 en bd!!!
 	private void altaCursos(Set<Curso> cursos)
 	{
 		StringBuilder data = new StringBuilder();
@@ -247,6 +250,30 @@ public class ImportarCursos {
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("curso", data.toString());
 		Conexion.enviarPost(datos, PHP_ALTA_CURSO);
+	}
+	
+	private void altaCursos_Docentes(Set<Curso> cursos)
+	{
+		StringBuilder data = new StringBuilder();
+		int i = 0;
+		for (Curso curso : cursos)
+		{
+			for(Profesor prof : curso.getProfesores())
+			{
+			i++;
+			String com = curso.getComision();
+			String nombreMat = curso.getMateria().getNombre();
+			String semestre = curso.getSemestre();
+			Integer año = curso.getAño();
+			String nombreProf = prof.getNombre();
+			data.append(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + nombreProf
+					+ "//");
+			}
+		}
+		System.out.println("TOTAL CURSOS_DOCENTES: " + i);
+		Map<String, String> datos = new HashMap<String, String>();
+		datos.put("curso_docente", data.toString());
+		Conexion.enviarPost(datos, PHP_ALTA_CURSO_DOCENTE);
 	}
 
 }
