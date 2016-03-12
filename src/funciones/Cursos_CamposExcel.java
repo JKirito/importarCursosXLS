@@ -8,8 +8,8 @@ package funciones;
 // Esto enum se usa en importacion (se usa el orden) y en exportacion (se usa la descripcion)
 
 public enum Cursos_CamposExcel {
-	COMISION(0, "COMISION"), MATERIA(1, "MATERIA"), DIA(3, "DIA"), HORAINICIO(4, "HORA DE INICIO"), HORAFIN(5, "HORA DE FIN"), DOCENTES(6, "DOCENTE"), AULA(
-			7, "AULA");
+	COMISION(1, "COMISION"), MATERIA(2, "MATERIA"), DIA(4, "DIA"), HORAINICIO(5, "HORA DE INICIO"), HORAFIN(6, "HORA DE FIN"),
+	DOCENTES(7, "DOCENTE"), AULA(8, "AULA");
 
 	private final int value;
 	private final String name;

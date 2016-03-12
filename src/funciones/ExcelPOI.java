@@ -94,6 +94,8 @@ public class ExcelPOI {
 	
     public static String valorCeldaToHora(Cell cell) throws Exception {
     	Date cellDate = valorCeldaToDate(cell);
+    	if(cellDate == null)
+    		return "A confirmar";
         SimpleDateFormat formateador = new SimpleDateFormat("HH:mm");
         return formateador.format(cellDate);
     }

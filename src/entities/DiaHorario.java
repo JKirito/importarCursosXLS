@@ -2,24 +2,20 @@ package entities;
 
 
 public class DiaHorario {
-	Integer id;
+//	Integer id;
 	String dia;
-	double horaInicio;
-	double horaFin;
+//	double horaInicio;
+//	double horaFin;
+	String horaInicio;
+	String horaFin;
 	
 	public DiaHorario(String dia, String horaInicio, String horaFin) {
 		super();
 		this.dia = dia;
-		this.horaInicio = Double.valueOf(horaInicio.replace(":", "."));
-		this.horaFin = Double.valueOf(horaFin.replace(":", "."));
-	}
-
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
+//		this.horaInicio = Double.valueOf(horaInicio.replace(":", "."));
+//		this.horaFin = Double.valueOf(horaFin.replace(":", "."));
+		this.horaInicio = horaInicio;
+		this.horaFin = horaFin;
 	}
 
 	public String getDia() {
@@ -30,19 +26,35 @@ public class DiaHorario {
 		this.dia = dia;
 	}
 
-	public double getHoraInicio() {
+//	public double getHoraInicio() {
+//		return horaInicio;
+//	}
+//
+//	public void setHoraInicio(double horaInicio) {
+//		this.horaInicio = horaInicio;
+//	}
+//
+//	public double getHoraFin() {
+//		return horaFin;
+//	}
+//
+//	public void setHoraFin(double horaFin) {
+//		this.horaFin = horaFin;
+//	}
+
+	public String getHoraInicio() {
 		return horaInicio;
 	}
 
-	public void setHoraInicio(double horaInicio) {
+	public void setHoraInicio(String horaInicio) {
 		this.horaInicio = horaInicio;
 	}
 
-	public double getHoraFin() {
+	public String getHoraFin() {
 		return horaFin;
 	}
 
-	public void setHoraFin(double horaFin) {
+	public void setHoraFin(String horaFin) {
 		this.horaFin = horaFin;
 	}
 	
@@ -50,6 +62,10 @@ public class DiaHorario {
 	public String toString() {
 		String horaInicio = this.horaInicio + "";
 		horaInicio = horaInicio.replace(".", ":");
+		//si no está confirmado el horario...
+		if(!horaInicio.contains(":") || !horaFin.contains(":"))
+			return this.dia + ";" + horaInicio + ";" + horaFin;
+		
 		// La hora sean 2 dígitos
 		horaInicio = horaInicio.split(":")[0].length() != 2 ? "0" + horaInicio
 				: horaInicio;
@@ -72,12 +88,8 @@ public class DiaHorario {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((dia == null) ? 0 : dia.hashCode());
-		long temp;
-		temp = Double.doubleToLongBits(horaFin);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(horaInicio);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((horaFin == null) ? 0 : horaFin.hashCode());
+		result = prime * result + ((horaInicio == null) ? 0 : horaInicio.hashCode());
 		return result;
 	}
 
@@ -95,16 +107,15 @@ public class DiaHorario {
 				return false;
 		} else if (!dia.equals(other.dia))
 			return false;
-		if (Double.doubleToLongBits(horaFin) != Double
-				.doubleToLongBits(other.horaFin))
-			return false;
-		if (Double.doubleToLongBits(horaInicio) != Double
-				.doubleToLongBits(other.horaInicio))
-			return false;
-		if (id == null) {
-			if (other.id != null)
+		if (horaFin == null) {
+			if (other.horaFin != null)
 				return false;
-		} else if (!id.equals(other.id))
+		} else if (!horaFin.equals(other.horaFin))
+			return false;
+		if (horaInicio == null) {
+			if (other.horaInicio != null)
+				return false;
+		} else if (!horaInicio.equals(other.horaInicio))
 			return false;
 		return true;
 	}

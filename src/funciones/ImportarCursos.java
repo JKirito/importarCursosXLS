@@ -22,10 +22,9 @@ import entities.Profesor;
 
 public class ImportarCursos {
 	
+	// Conjuntos a los que hay que dar de alta si no existen.
 	private Map<String, Curso> cursos = new HashMap<String, Curso>();
 	
-	// Conjuntos a los que hay que dar de alta si no existen. Todo esto está incluido ademas en "this.cursos", pero con repetidos ahi
-	// Acá se supone que no hay repetidos, asi que son menos consultas a la base.
 	private Set<Aula> aulas = new HashSet<Aula>();
 	private Set<Materia> materias = new HashSet<Materia>();
 	private Set<Profesor> docentes = new HashSet<Profesor>();
@@ -43,6 +42,8 @@ public class ImportarCursos {
 	private static final String PHP_ALTA_CURSO_DOCENTE = "altaCurso_Docente.php";
 	private static final String PHP_ALTA_CURSO_HORARIO_AULA = "altaCurso_Horario_Aula.php";
 	
+	private static final String SIN_DATO = "SIN DATO";
+	
 	// UNIQUE
 	// alter table cursos add constraint uc_cur unique(comision, id_materias, semestre, año);
 
@@ -51,7 +52,7 @@ public class ImportarCursos {
 		this.año = año;
 	}
 
-	public void importarCursos(File file) throws Exception {
+	public void importarCursos(File file, boolean persistir) throws Exception {
 		if (file == null)
 			throw new Exception("File inexistente!!!");
 
@@ -77,11 +78,17 @@ public class ImportarCursos {
 			
 			String keyComision = ExcelPOI.valorCeldaToString(row.getCell(Cursos_CamposExcel.COMISION.pos()));
 			
+			if(keyComision == null) {
+				continue;
+			}
+			
 			//HORARIOS_AULA (SIEMPRE SE AGREGA)
 			String horaInicio = ExcelPOI.valorCeldaToHora(row.getCell(Cursos_CamposExcel.HORAINICIO.pos()));
 			String horaFin = ExcelPOI.valorCeldaToHora(row.getCell(Cursos_CamposExcel.HORAFIN.pos()));
 			String dia = ExcelPOI.valorCeldaToString(row.getCell(Cursos_CamposExcel.DIA.pos()));
-			String aulaString = ExcelPOI.valorCeldaToString(row.getCell(Cursos_CamposExcel.AULA.pos())).replace("AULA ", "");
+			dia = dia == null || dia.isEmpty() ? SIN_DATO : dia;
+			String aulaString = ExcelPOI.valorCeldaToString(row.getCell(Cursos_CamposExcel.AULA.pos()));
+			aulaString = aulaString == null || aulaString.isEmpty() ? SIN_DATO : aulaString.replace("AULA ", "");
 			Aula aula = new Aula(aulaString);
 			// Agrego aula
 			aulas.add(aula);
@@ -95,6 +102,22 @@ public class ImportarCursos {
 			//Si ya agregué un curso con ese código-comision, entonces sólo falta agregar el diaHoraAula diferente
 			if(cursos.containsKey(keyComision))
 			{
+				// Verifico que los códigos de materia comision no aparezcan con diferente nombres de materias!
+				if (!cursos
+						.get(keyComision)
+						.getMateria()
+						.getNombre()
+						.equals(row.getCell(Cursos_CamposExcel.MATERIA.pos())
+								.getStringCellValue())) {
+					throw new Exception(
+							"HEY! Hay dos id comisiones iguales pero con diferente nombre de materia!\n1)"
+									+ cursos.get(keyComision).getMateria()
+											.getNombre()+", cod='"+keyComision+"'"
+									+ "\n2)"
+									+ row.getCell(
+											Cursos_CamposExcel.MATERIA.pos())
+											.getStringCellValue()+", cod='"+keyComision+"'");
+				}
 				cursos.get(keyComision).getHorariosAula().add(diaHorarioEnAula);
 			}
 			else
@@ -162,29 +185,35 @@ public class ImportarCursos {
 		
 		// ALTAS!!!
 		
+//		for(Curso C : new HashSet<Curso>(this.cursos.values())) {
+//			if(C.getMateria().getNombre().equals("BASES DE DATOS II")){
+//				System.out.println("CURSO: "+C.toString());
+//			}
+//		}
+		
 		// Alta Aulas
-		//altaAulas(this.aulas);
+		altaAulas(this.aulas, persistir);
 		
 		//Alta Horarios
-		//altaDiasHorarios(this.diaHorario);
+		altaDiasHorarios(this.diaHorario, persistir);
 		
 		//Alta Materias
-		//altaMaterias(this.materias);
+		altaMaterias(this.materias, persistir);
 		
 		//Alta Docentes
-		//altaDocentes(this.docentes);
+		altaDocentes(this.docentes, persistir);
 		
 		//Alta cursos
-		//altaCursos(new HashSet<Curso>(this.cursos.values()));
+		altaCursos(new HashSet<Curso>(this.cursos.values()), persistir);
 		
 		//Alta cursos_docentes
-		//altaCursos_Docentes(new HashSet<Curso>(this.cursos.values()));
+		altaCursos_Docentes(new HashSet<Curso>(this.cursos.values()), persistir);
 		
 		//Alta cursos_horarios_aulas
-		altaCurso_Horario_Aula(new HashSet<Curso>(this.cursos.values()));
+		altaCurso_Horario_Aula(new HashSet<Curso>(this.cursos.values()), persistir);
 	}
 	
-	private void altaAulas(Set<Aula> aulas)
+	private void altaAulas(Set<Aula> aulas, boolean persistir) throws InterruptedException
 	{
 		StringBuilder data = new StringBuilder();
 		final String SEPARADOR = ",";
@@ -195,10 +224,14 @@ public class ImportarCursos {
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("aula", data.toString());
-		Conexion.enviarPost(datos, PHP_ALTA_AULA);
+		if(persistir)
+		{
+			Conexion.enviarPost(datos, PHP_ALTA_AULA);
+			Thread.sleep(1000);
+		}
 	}
 	
-	private void altaMaterias(Set<Materia> materias)
+	private void altaMaterias(Set<Materia> materias, boolean persistir) throws InterruptedException
 	{
 		StringBuilder data = new StringBuilder();
 		final String SEPARADOR = ";";
@@ -209,10 +242,14 @@ public class ImportarCursos {
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("nombre", data.toString());
-		Conexion.enviarPost(datos, PHP_ALTA_MATERIA);
+		if(persistir)
+		{
+			Conexion.enviarPost(datos, PHP_ALTA_MATERIA);
+			Thread.sleep(1000);
+		}
 	}
 	
-	private void altaDocentes(Set<Profesor> profesores)
+	private void altaDocentes(Set<Profesor> profesores, boolean persistir) throws InterruptedException
 	{
 		StringBuilder data = new StringBuilder();
 		final String SEPARADOR = ";";
@@ -223,10 +260,14 @@ public class ImportarCursos {
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("nombre", data.toString());
-		Conexion.enviarPost(datos, PHP_ALTA_DOCENTE);
+		if(persistir)
+		{
+			Conexion.enviarPost(datos, PHP_ALTA_DOCENTE);
+			Thread.sleep(2000);
+		}
 	}
 	
-	private void altaDiasHorarios(Set<DiaHorario> horarios)
+	private void altaDiasHorarios(Set<DiaHorario> horarios, boolean persistir) throws InterruptedException
 	{
 		StringBuilder data = new StringBuilder();
 		final String SEPARADOR = ",";
@@ -237,18 +278,22 @@ public class ImportarCursos {
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("diaHora", data.toString());
-		Conexion.enviarPost(datos, PHP_ALTA_DIAHORARIO);
+		if(persistir)
+		{
+			Conexion.enviarPost(datos, PHP_ALTA_DIAHORARIO);
+			Thread.sleep(1000);
+		}
 	}
 	
-	private void altaCursos(Set<Curso> cursos)
+	private void altaCursos(Set<Curso> cursos, boolean persistir) throws InterruptedException
 	{
 		StringBuilder data = new StringBuilder();
 		System.out.println("TOTAL CURSOS: " + cursos.size());
-		int i = 0;
+//		int i = 0;
 		final String SEPARADOR = "//";
 		for (Curso curso : cursos)
 		{
-			i++;
+//			i++;
 			String com = curso.getComision();
 			String nombreMat = curso.getMateria().getNombre();
 			String semestre = curso.getSemestre();
@@ -258,10 +303,14 @@ public class ImportarCursos {
 		}
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("curso", data.toString());
-		Conexion.enviarPost(datos, PHP_ALTA_CURSO);
+		if(persistir)
+		{
+			Conexion.enviarPost(datos, PHP_ALTA_CURSO);
+			Thread.sleep(2000);
+		}
 	}
 	
-	private void altaCursos_Docentes(Set<Curso> cursos)
+	private void altaCursos_Docentes(Set<Curso> cursos, boolean persistir) throws InterruptedException
 	{
 		StringBuilder data = new StringBuilder();
 		int i = 0;
@@ -283,15 +332,19 @@ public class ImportarCursos {
 		System.out.println("TOTAL CURSOS_DOCENTES: " + i);
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("curso_docente", data.toString());
-		Conexion.enviarPost(datos, PHP_ALTA_CURSO_DOCENTE);
+		if(persistir)
+		{
+			Conexion.enviarPost(datos, PHP_ALTA_CURSO_DOCENTE);
+			Thread.sleep(4000);
+		}
 	}
 	
-	private void altaCurso_Horario_Aula(Set<Curso> cursos)
+	private void altaCurso_Horario_Aula(Set<Curso> cursos, boolean persistir) throws InterruptedException
 	{
 		StringBuilder data = new StringBuilder();
 		int i = 0;
 		final String SEPARADOR = "//";
-		Set<String> a = new HashSet<String>();
+		Set<String> cursos_horarios_aulas_sinRepetidos = new HashSet<String>();
 		for (Curso curso : cursos)
 		{
 			for(DiaHorarioAula HA : curso.getHorariosAula())
@@ -302,23 +355,24 @@ public class ImportarCursos {
 			String semestre = curso.getSemestre();
 			Integer año = curso.getAño();
 			String horarioAula = HA.toString();
-			data.append(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + horarioAula
-					+ SEPARADOR);
-			if(a.contains(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + horarioAula
-					+ SEPARADOR)){
-				System.out.println(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + horarioAula
-					+ SEPARADOR);
-			}else{
-				a.add(com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + horarioAula
-						+ SEPARADOR);				
-			}
+			String curso_Horario_Aula_string = com + ";" + nombreMat + ";" + semestre + ";" + año + ";" + horarioAula
+					+ SEPARADOR;
+			data.append(curso_Horario_Aula_string);
+			if(cursos_horarios_aulas_sinRepetidos.contains(curso_Horario_Aula_string))
+				System.out.println(curso_Horario_Aula_string);
+			else
+				cursos_horarios_aulas_sinRepetidos.add(curso_Horario_Aula_string);
 			}
 		}
 		System.out.println("TOTAL CURSOS_HORARIOS_AULAS: " + i);
-		System.out.println(a.size() == i ? "OK" : a.size() +": s diferente, hay algo mal :(");
+		System.out.println(cursos_horarios_aulas_sinRepetidos.size() == i ? "OK" : cursos_horarios_aulas_sinRepetidos.size() +": es diferente, hay algo mal :(");
 		Map<String, String> datos = new HashMap<String, String>();
 		datos.put("curso_horario_aula", data.toString());
-//		Conexion.enviarPost(datos, PHP_ALTA_CURSO_HORARIO_AULA);
+		if(persistir)
+		{
+			Conexion.enviarPost(datos, PHP_ALTA_CURSO_HORARIO_AULA);
+			Thread.sleep(5000);
+		}
 	}
 
 }

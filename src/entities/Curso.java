@@ -158,4 +158,12 @@ public class Curso {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "Curso [id=" + id + ", nombre=" + nombre + ", comision="
+				+ comision + ", horarioAula=" + horarioAula + ", profesores="
+				+ profesores + ", materia=" + materia + ", semestre="
+				+ semestre + ", año=" + año + "]";
+	}
+	
 }

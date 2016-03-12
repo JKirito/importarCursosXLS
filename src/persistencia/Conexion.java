@@ -25,7 +25,7 @@ public class Conexion {
 	// private static final String URL = "http://181.16.65.149/guiame/";
 
 	// IP hostinger
-	private static final String URL = "http://pps1ungs.esy.es/guiame/altasXLS/";
+	private static final String URL = "http://simiungs.esy.es/guiame/altasXLS/";
 
 	public static String getPHPResult(String phpName) {
 		HttpClient cliente = new DefaultHttpClient();
